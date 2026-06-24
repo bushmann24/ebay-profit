@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>eBay Profit Calc</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        input { display: block; margin: 10px 0; padding: 8px; width: 100%; }
+        button { padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+    </style>
+</head>
+<body>
+
+    <h2>eBay Dropship Calculator</h2>
+    <input type="text" id="itemName" placeholder="Item Name">
+    <input type="number" id="buyPrice" placeholder="Buy Price (ex GST)">
+    <input type="number" id="sellPrice" placeholder="eBay Sell Price">
+    <button onclick="addItem()">Create Item</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Total Cost (Inc GST)</th>
+                <th>eBay Fee (13%)</th>
+                <th>Profit</th>
+            </tr>
+        </thead>
+        <tbody id="itemTable"></tbody>
+    </table>
+
+    <script>
+        function addItem() {
+            const name = document.getElementById('itemName').value;
+            const buy = parseFloat(document.getElementById('buyPrice').value);
+            const sell = parseFloat(document.getElementById('sellPrice').value);
+
+            const totalCost = buy * 1.10; // Add 10% GST
+            const ebayFee = sell * 0.13;  // 13% eBay fee
+            const profit = (sell - ebayFee) - totalCost;
+
+            const table = document.getElementById('itemTable');
+            table.innerHTML += `<tr>
+                <td>${name}</td>
+                <td>$${totalCost.toFixed(2)}</td>
+                <td>$${ebayFee.toFixed(2)}</td>
+                <td style="color: ${profit >= 0 ? 'green' : 'red'}">$${profit.toFixed(2)}</td>
+            </tr>`;
+        }
+    </script>
+</body>
+</html>
