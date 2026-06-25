@@ -2,53 +2,259 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>eBay Profit Calc</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eBay Dropship Tracker</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        input { display: block; margin: 10px 0; padding: 8px; width: 100%; }
-        button { padding: 10px 20px; cursor: pointer; background: #007bff; color: white; border: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        /* Mobile App Styling */
+        :root {
+            --primary: #2563eb;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --danger: #ef4444;
+            --success: #10b981;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px 10px;
+            display: flex;
+            justify-content: center;
+        }
+        .app-container {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg);
+        }
+        h2 { text-align: center; margin-top: 0; }
+        
+        /* Dashboard */
+        .dashboard {
+            background: var(--primary);
+            color: white;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+        .dashboard h1 { margin: 0; font-size: 2.5rem; }
+        .dashboard p { margin: 5px 0 0 0; font-size: 0.9rem; opacity: 0.9; }
+
+        /* Form */
+        .form-card {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+        label { display: block; font-size: 0.85rem; font-weight: bold; margin-bottom: 5px; color: #64748b; }
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        button {
+            width: 100%;
+            padding: 14px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        button:active { opacity: 0.8; }
+
+        /* Item List */
+        .item-card {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 12px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #f1f5f9;
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        .item-stats {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.85rem;
+            color: #64748b;
+            margin-bottom: 5px;
+        }
+        .profit {
+            text-align: right;
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+        .profit.positive { color: var(--success); }
+        .profit.negative { color: var(--danger); }
+        
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-edit { background: none; border: none; color: var(--primary); padding: 0; width: auto; font-size: 0.85rem; }
+        .btn-delete { background: none; border: none; color: var(--danger); padding: 0; width: auto; font-size: 0.85rem; }
     </style>
 </head>
 <body>
 
-    <h2>eBay Dropship Calculator</h2>
-    <input type="text" id="itemName" placeholder="Item Name">
-    <input type="number" id="buyPrice" placeholder="Buy Price (ex GST)">
-    <input type="number" id="sellPrice" placeholder="eBay Sell Price">
-    <button onclick="addItem()">Create Item</button>
+<div class="app-container">
+    <div class="dashboard">
+        <p>Total Expected Profit</p>
+        <h1 id="totalProfitDisplay">$0.00</h1>
+    </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Item</th>
-                <th>Total Cost (Inc GST)</th>
-                <th>eBay Fee (13%)</th>
-                <th>Profit</th>
-            </tr>
-        </thead>
-        <tbody id="itemTable"></tbody>
-    </table>
+    <div class="form-card">
+        <h3 id="formTitle" style="margin-top:0;">Add New Item</h3>
+        <input type="hidden" id="editId">
+        
+        <label>Item Name</label>
+        <input type="text" id="itemName" placeholder="e.g. Wireless Mouse" required>
+        
+        <label>Buy Price (ex GST)</label>
+        <input type="number" id="buyPrice" placeholder="0.00" step="0.01" required>
+        
+        <label>eBay Sell Price</label>
+        <input type="number" id="sellPrice" placeholder="0.00" step="0.01" required>
+        
+        <button onclick="saveItem()" id="saveBtn">Create Item</button>
+        <button onclick="cancelEdit()" id="cancelBtn" style="display:none; background:#94a3b8; margin-top:10px;">Cancel Edit</button>
+    </div>
 
-    <script>
-        function addItem() {
-            const name = document.getElementById('itemName').value;
-            const buy = parseFloat(document.getElementById('buyPrice').value);
-            const sell = parseFloat(document.getElementById('sellPrice').value);
+    <div id="inventoryList"></div>
+</div>
 
+<script>
+    // Load items from LocalStorage or start empty
+    let items = JSON.parse(localStorage.getItem('ebayDropshipItems')) || [];
+
+    function updateUI() {
+        const listDiv = document.getElementById('inventoryList');
+        listDiv.innerHTML = '';
+        let totalProfit = 0;
+
+        items.forEach((item, index) => {
+            const buy = parseFloat(item.buy);
+            const sell = parseFloat(item.sell);
+            
+            // The Math
             const totalCost = buy * 1.10; // Add 10% GST
             const ebayFee = sell * 0.13;  // 13% eBay fee
-            const profit = (sell - ebayFee) - totalCost;
+            const profit = sell - ebayFee - totalCost;
+            
+            totalProfit += profit;
 
-            const table = document.getElementById('itemTable');
-            table.innerHTML += `<tr>
-                <td>${name}</td>
-                <td>$${totalCost.toFixed(2)}</td>
-                <td>$${ebayFee.toFixed(2)}</td>
-                <td style="color: ${profit >= 0 ? 'green' : 'red'}">$${profit.toFixed(2)}</td>
-            </tr>`;
+            const isPositive = profit >= 0;
+            const profitClass = isPositive ? 'positive' : 'negative';
+            const profitSign = isPositive ? '+' : '';
+
+            listDiv.innerHTML += `
+                <div class="item-card">
+                    <div class="item-header">
+                        <span>${item.name}</span>
+                        <div class="actions">
+                            <button class="btn-edit" onclick="editItem(${index})">Edit</button>
+                            <button class="btn-delete" onclick="deleteItem(${index})">Delete</button>
+                        </div>
+                    </div>
+                    <div class="item-stats"><span>Cost (inc GST):</span> <span>$${totalCost.toFixed(2)}</span></div>
+                    <div class="item-stats"><span>Sell Price:</span> <span>$${sell.toFixed(2)}</span></div>
+                    <div class="item-stats"><span>eBay Fee (13%):</span> <span>$${ebayFee.toFixed(2)}</span></div>
+                    <div class="profit ${profitClass}">${profitSign}$${profit.toFixed(2)}</div>
+                </div>
+            `;
+        });
+
+        // Update Dashboard
+        document.getElementById('totalProfitDisplay').innerText = totalProfit >= 0 ? `$${totalProfit.toFixed(2)}` : `-$${Math.abs(totalProfit).toFixed(2)}`;
+        
+        // Save to LocalStorage
+        localStorage.setItem('ebayDropshipItems', JSON.stringify(items));
+    }
+
+    function saveItem() {
+        const name = document.getElementById('itemName').value;
+        const buy = document.getElementById('buyPrice').value;
+        const sell = document.getElementById('sellPrice').value;
+        const editId = document.getElementById('editId').value;
+
+        if (!name || !buy || !sell) {
+            alert("Please fill out all fields.");
+            return;
         }
-    </script>
+
+        const newItem = { name, buy, sell };
+
+        if (editId !== "") {
+            // Update existing item
+            items[parseInt(editId)] = newItem;
+            cancelEdit();
+        } else {
+            // Add new item
+            items.unshift(newItem); // Adds to the top of the list
+        }
+
+        clearForm();
+        updateUI();
+    }
+
+    function deleteItem(index) {
+        if (confirm("Are you sure you want to delete this item?")) {
+            items.splice(index, 1);
+            updateUI();
+        }
+    }
+
+    function editItem(index) {
+        const item = items[index];
+        document.getElementById('itemName').value = item.name;
+        document.getElementById('buyPrice').value = item.buy;
+        document.getElementById('sellPrice').value = item.sell;
+        document.getElementById('editId').value = index;
+        
+        document.getElementById('formTitle').innerText = "Edit Item";
+        document.getElementById('saveBtn').innerText = "Save Changes";
+        document.getElementById('cancelBtn').style.display = "block";
+        window.scrollTo(0, 0); // Scroll to top
+    }
+
+    function cancelEdit() {
+        clearForm();
+        document.getElementById('formTitle').innerText = "Add New Item";
+        document.getElementById('saveBtn').innerText = "Create Item";
+        document.getElementById('cancelBtn').style.display = "none";
+        document.getElementById('editId').value = "";
+    }
+
+    function clearForm() {
+        document.getElementById('itemName').value = '';
+        document.getElementById('buyPrice').value = '';
+        document.getElementById('sellPrice').value = '';
+    }
+
+    // Initial render
+    updateUI();
+</script>
+
 </body>
 </html>
